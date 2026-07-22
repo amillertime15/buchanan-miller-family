@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buchanan-Miller Family Tree</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0e0; }
+        header { background: #1a1a2e; padding: 25px; text-align: center; border-bottom: 2px solid #e94560; }
+        header h1 { font-size: 2em; color: white; }
+        header p { color: #888; margin-top: 5px; font-size: 0.9em; }
+        .tabs { display: flex; justify-content: center; gap: 5px; padding: 12px; background: #1a1a2e;
+                flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+        .tab { padding: 9px 18px; background: #16213e; border: 1px solid #333; border-radius: 8px;
+               cursor: pointer; color: #aaa; transition: all 0.3s; font-size: 0.85em; }
+        .tab:hover { border-color: #e94560; color: white; }
+        .tab.active { background: #e94560; color: white; border-color: #e94560; }
+        .search-bar { padding: 10px 20px; background: #16213e; text-align: center; }
+        .search-bar input { width: 100%; max-width: 400px; padding: 9px 14px; border-radius: 8px;
+                            border: 1px solid #333; background: #1a1a2e; color: white; font-size: 0.95em; }
+        .search-bar input::placeholder { color: #555; }
+        .container { padding: 25px; max-width: 1200px; margin: 0 auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .gen-label { color: #e94560; font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px;
+                     margin: 25px 0 12px; padding-left: 10px; border-left: 3px solid #e94560; }
+        .couple { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+                  background: #1a1a2e; padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #2a2a4e; }
+        .connector { color: #e94560; font-size: 1.1em; }
+        .person { background: #16213e; border: 1px solid #2a2a4e; border-radius: 8px; padding: 10px 14px;
+                  transition: all 0.2s; position: relative; }
+        .person:hover { border-color: #e94560; }
+        .person.deceased { opacity: 0.7; }
+        .person.deceased::after { content: '✝'; position: absolute; top: 4px; right: 6px; color: #666; font-size: 0.65em; }
+        .person.male { border-left: 3px solid #4a9eff; }
+        .person.female { border-left: 3px solid #ff6b9d; }
+        .name { font-weight: bold; color: white; font-size: 0.9em; }
+        .dates { color: #777; font-size: 0.75em; margin-top: 2px; }
+        .place { color: #555; font-size: 0.7em; margin-top: 1px; }
+</style>
+</head>
+<body>
+    <style>
+        .children { margin-left: 30px; padding-left: 15px; border-left: 2px dashed #2a2a4e; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .children .person { margin-bottom: 4px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .stat { background: #1a1a2e; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #2a2a4e; }
+        .stat .number { font-size: 1.6em; color: #e94560; font-weight: bold; }
+        .stat .label { color: #777; font-size: 0.75em; margin-top: 3px; }
+        .reunion-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+        .reunion-item { background: #1a1a2e; padding: 10px 14px; border-radius: 6px; display: flex;
+                        justify-content: space-between; align-items: center; border: 1px solid #2a2a4e; font-size: 0.9em; }
+        .reunion-item .year { color: #e94560; font-weight: bold; }
+        .reunion-item .location { color: #aaa; }
+        /* Poster tab */
+        .poster-view { background: white; color: #222; padding: 30px; border-radius: 12px; }
+        .poster-view h2 { color: #8B0000; text-align: center; font-size: 1.8em; margin-bottom: 5px; }
+        .poster-view .psub { text-align: center; color: #666; margin-bottom: 25px; }
+        .poster-view .pgen { font-size: 0.8em; color: #8B0000; text-transform: uppercase; letter-spacing: 2px;
+                             margin: 20px 0 8px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+        .poster-view .pcouple { text-align: center; font-size: 1em; font-weight: bold; color: #8B0000; margin: 10px 0; }
+        .poster-view .pchildren { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 15px; }
+        .poster-view .pc { background: #f8f4f4; border: 1px solid #ddd; border-radius: 6px; padding: 5px 10px;
+                           font-size: 0.78em; text-align: center; min-width: 130px; }
+        .poster-view .pc .pn { font-weight: bold; color: #222; }
+        .poster-view .pc .pd { color: #888; font-size: 0.9em; }
+        .poster-view .pfam { margin: 15px 0; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .poster-view .pfam-title { font-weight: bold; color: #8B0000; font-size: 0.85em; margin-bottom: 6px; }
+        @media (max-width: 768px) {
+            .tabs { gap: 3px; padding: 8px; }
+            .tab { padding: 7px 12px; font-size: 0.8em; }
+            .couple { flex-direction: column; align-items: flex-start; }
+            .container { padding: 15px; }
+        }
+    </style>
+
+<header>
+    <h1>Buchanan-Miller Family Tree</h1>
+    <p>Tracing our heritage through Mississippi and beyond | Updated Dec 2025</p>
+</header>
+<div class="search-bar"><input type="text" id="search" placeholder="🔍 Search a name..." onkeyup="doSearch()"></div>
+<div class="tabs">
+    <div class="tab active" onclick="show('overview')">Overview</div>
+    <div class="tab" onclick="show('gen1')">Gen 1: Roots</div>
+    <div class="tab" onclick="show('gen2')">Gen 2: Buchanan</div>
+    <div class="tab" onclick="show('gen3')">Gen 3: Miller/Buchanan</div>
+    <div class="tab" onclick="show('gen4')">Gen 4: Families</div>
+    <div class="tab" onclick="show('gen5')">Gen 5: Current</div>
+    <div class="tab" onclick="show('reunions')">Reunions</div>
+    <div class="tab" onclick="show('poster')">Poster View</div>
+</div>
+<div class="container">
+
+<!-- OVERVIEW -->
+<div class="section active" id="overview">
+    <div class="stats">
+        <div class="stat"><div class="number">5</div><div class="label">Generations</div></div>
+        <div class="stat"><div class="number">120+</div><div class="label">People</div></div>
+        <div class="stat"><div class="number">18</div><div class="label">Reunions</div></div>
+        <div class="stat"><div class="number">8</div><div class="label">Cities</div></div>
+        <div class="stat"><div class="number">1853</div><div class="label">Earliest Record</div></div>
+    </div>
+    <div style="background:#1a1a2e; padding:20px; border-radius:10px; border:1px solid #2a2a4e; line-height:1.9; font-size:0.9em;">
+        <p><strong style="color:#e94560;">George W. Jones</strong> (b.1853) & Harriet Bedford → <strong>Rosie Lee Jones</strong> (b.1873)</p>
+        <p style="color:#555;">↓</p>
+        <p><strong style="color:#e94560;">Virgil Buchanan</strong> (b.1873) married <strong>Rosie Lee Jones</strong> — Jan 12, 1899</p>
+        <p style="color:#555;">↓ 18 children (12 girls, 6 boys)</p>
+        <p><strong style="color:#e94560;">Stran Miller</strong> (b.1864) & Lizzie → <strong>Van Miller Sr.</strong> (b.1896)</p>
+        <p style="color:#555;">↓</p>
+        <p><strong>Van Miller Sr.</strong> married <strong>Elizabeth "Sug" Buchanan</strong> — uniting the families</p>
+        <p style="color:#555;">↓ 13 children (7 girls, 6 boys)</p>
+        <p>Their children had 50+ grandchildren documented across the country</p>
+    </div>
+</div>
+
+<!-- GEN 1 -->
+<div class="section" id="gen1">
+    <div class="gen-label">Generation 1 — Earliest Ancestors (1850s–1870s)</div>
+    <div class="couple">
+        <div class="person male deceased"><div class="name">George Washington Jones</div><div class="dates">b. 1853 — d. 1920</div></div>
+        <div class="connector">⚭</div>
+        <div class="person female deceased"><div class="name">Harriet Bedford</div><div class="dates">1st wife</div></div>
+        <div class="connector">+</div>
+        <div class="person female deceased"><div class="name">Louise Dockery</div><div class="dates">2nd wife</div></div>
+    </div>
+    <div class="gen-label">Children of George Jones & Harriet Bedford</div>
+    <div class="children">
+        <div class="person male deceased"><div class="name">John Wesley Jones</div></div>
+        <div class="person female deceased"><div class="name">Darkies Jones</div><div class="dates">b. 1878 — d. 1972</div></div>
+        <div class="person male deceased"><div class="name">Coleman Jones</div><div class="dates">b. 1881</div></div>
+        <div class="person female deceased"><div class="name">Fannie Jones</div><div class="dates">b. 1883</div></div>
+        <div class="person male deceased"><div class="name">Richard Jones</div><div class="dates">b. 1884</div></div>
+        <div class="person male deceased"><div class="name">George Bob Jones</div><div class="dates">b. 1887</div></div>
+        <div class="person male deceased"><div class="name">Tom Petty Jones</div><div class="dates">b. 1889</div></div>
+        <div class="person male deceased"><div class="name">Joe Lee Jones</div><div class="dates">b. 1890</div></div>
+        <div class="person male deceased"><div class="name">Elijah Jones</div></div>
+        <div class="person female deceased"><div class="name">Rosie Lee Jones</div><div class="dates">b. Feb 2, 1873 — d. Dec 11, 1972</div><div class="place">Married Virgil Buchanan 1899</div></div>
+    </div>
+    <div class="gen-label">Children of George Jones & Louise Dockery</div>
+    <div class="children">
+        <div class="person male deceased"><div class="name">Nathaniel "Buzz" Jones</div><div class="dates">b. 1902</div></div>
+        <div class="person male deceased"><div class="name">James "Borky" Jones</div><div class="dates">b. 1903</div></div>
+        <div class="person female deceased"><div class="name">Liddie Anne Jones</div></div>
+    </div>
+
+    <div class="gen-label" style="margin-top:30px;">Stran Miller Line</div>
+    <div class="couple">
+        <div class="person male deceased"><div class="name">Stran Miller</div><div class="dates">b. Nov 1864 — Weir, MS (Choctaw County)</div></div>
+        <div class="connector">⚭</div>
+        <div class="person female deceased"><div class="name">Lizzie Evans</div><div class="dates">b. Jan 1870</div></div>
+        <div class="connector">+</div>
+        <div class="person female deceased"><div class="name">Martha Howard</div><div class="dates">2nd wife</div></div>
+    </div>
+    <div class="gen-label">Children of Stran Miller</div>
+    <div class="children">
+        <div class="person female deceased"><div class="name">Zellie Miller Boyd Robinson</div><div class="dates">b. Oct 14, 1891 — d. Jun 2, 1981</div></div>
+        <div class="person male deceased"><div class="name">Van Miller Sr.</div><div class="dates">b. Mar 20, 1896 — d. Dec 11, 1980</div><div class="place">Weir, MS</div></div>
+        <div class="person female deceased"><div class="name">Mae Lee Miller Edwards</div><div class="dates">b. Jan 1898 — d. ~1970s</div></div>
+        <div class="person male deceased"><div class="name">Henry Cleveland Evans</div><div class="dates">b. Sep 22, 1900 — d. Apr 24, 1989</div></div>
+        <div class="person male deceased"><div class="name">Tuck Zan Miller</div><div class="dates">b. Jan 10, 1901 — d. Feb 8, 1990</div></div>
+        <div class="person female deceased"><div class="name">Luella Miller Ford Turner</div><div class="dates">b. Oct 17, 1905 — d. May 20, 1992</div></div>
+        <div class="person male deceased"><div class="name">Andrew Miller</div><div class="dates">b. Aug 9, 1910 — d. Mar 5, 1992</div><div class="place">w/ Martha Howard</div></div>
+    </div>
+</div>
+
+<!-- GEN 2 -->
+<div class="section" id="gen2">
+    <div class="gen-label">Generation 2 — Virgil Buchanan & Rosie Lee Jones (married Jan 12, 1899)</div>
+    <div class="couple">
+        <div class="person male deceased"><div class="name">Virgil Buchanan</div><div class="dates">b. Apr 19, 1873 — d. Oct 29, 1951</div><div class="place">DeSoto County, MS</div></div>
+        <div class="connector">⚭ 1899</div>
+        <div class="person female deceased"><div class="name">Rosie Lee Jones</div><div class="dates">b. Feb 2, 1873 — d. Dec 11, 1972</div></div>
+    </div>
+    <div class="gen-label">18 Children (12 girls, 6 boys)</div>
+    <div class="children">
+        <div class="person female deceased"><div class="name">Vinnie Buchanan Robinson</div><div class="dates">b. Dec 21, 1897 — d. Aug 7, 1988</div></div>
+        <div class="person male deceased"><div class="name">Rev. Willie E. "Bud" Buchanan</div><div class="dates">b. Dec 1, 1898 — d. Sep 21, 1982</div><div class="place">Wife: Leclar Jones | No children</div></div>
+        <div class="person female deceased"><div class="name">Annie Buchanan</div><div class="dates">b. Nov 26, 1901</div></div>
+        <div class="person male deceased"><div class="name">B.D. Buchanan</div><div class="dates">b. Feb 7, 1902</div></div>
+        <div class="person male deceased"><div class="name">Henry "Dank" Buchanan</div><div class="dates">b. Jul 15, 1903 — d. Jun 17, 1992</div><div class="place">Wife: Sarah Ella | Children: Willie, Robert</div></div>
+        <div class="person female deceased"><div class="name">Mary Lee Buchanan</div><div class="dates">b. Jan 1, 1906</div></div>
+        <div class="person female deceased"><div class="name">Irean "Lump" Watson</div><div class="dates">b. Apr 1, 1907 — d. Dec 19, 1987</div></div>
+        <div class="person female deceased"><div class="name">Mary Alice "Ladd" Harris</div><div class="dates">b. Jul 19, 1909 — d. Aug 14, 1987</div></div>
+        <div class="person female deceased"><div class="name">Charlotte "Lottie" Gales</div><div class="dates">b. Jun 19, 1910 — d. Apr 1, 1986</div></div>
+        <div class="person female deceased"><div class="name">Mary Buchanan (Twin)</div><div class="dates">b. Aug 20, 1912</div></div>
+        <div class="person female deceased"><div class="name">Martha Buchanan (Twin)</div><div class="dates">b. Aug 20, 1912</div></div>
+        <div class="person male deceased"><div class="name">Sylvester "Bull" Buchanan</div><div class="dates">b. Nov 27, 1916 — d. Jul 10, 1980</div></div>
+        <div class="person male deceased"><div class="name">Elder Angus "Pap" Buchanan</div><div class="dates">b. Apr 1, 1918 — d. Jan 7, 1988</div></div>
+        <div class="person male deceased"><div class="name">Joe Lee "Boot" Buchanan</div><div class="dates">b. Mar 1, 1919 — d. Jul 6, 1969</div><div class="place">Wife: Louise Barfield</div></div>
+        <div class="person female deceased"><div class="name">Elizabeth "Sug" Buchanan</div><div class="dates">b. Aug 22, 1920 — d. Mar 24, 1993</div><div class="place">Married Van Miller Sr.</div></div>
+        <div class="person male deceased"><div class="name">Perry Buchanan</div><div class="dates">b. 1921</div></div>
+        <div class="person female deceased"><div class="name">Rosie Lee "Toot" Buchanan Todd</div><div class="dates">b. Jul 9, 1921 — d. Nov 16, 2015</div></div>
+        <div class="person female deceased"><div class="name">Leane M. Buchanan</div><div class="dates">b. Sep 2, 1922</div></div>
+    </div>
+</div>
+
+<!-- GEN 3 -->
+<div class="section" id="gen3">
+    <div class="gen-label">Generation 3 — Van Miller Sr. & Elizabeth Buchanan | 13 Children</div>
+    <div class="couple">
+        <div class="person male deceased"><div class="name">Van Miller Sr.</div><div class="dates">b. Mar 20, 1896 — d. Dec 11, 1980</div><div class="place">Son of Stran Miller & Lizzie</div></div>
+        <div class="connector">⚭</div>
+        <div class="person female deceased"><div class="name">Elizabeth "Sug" Buchanan</div><div class="dates">b. Aug 22, 1920 — d. Mar 24, 1993</div><div class="place">Daughter of Virgil & Rosie Lee</div></div>
+    </div>
+    <p style="color:#666; font-size:0.8em; margin:-10px 0 10px 10px;">Also: Van + Winnie Crowley → Flora Louise, Mozell</p>
+    <div class="gen-label">Children</div>
+    <div class="children">
+        <div class="person female deceased"><div class="name">Flora Louise Miller Cook</div><div class="dates">b. Jan 28, 1917 — d. Aug 4, 1983</div><div class="place">w/ Winnie Crowley</div></div>
+        <div class="person female deceased"><div class="name">Mozell Miller McCoy</div><div class="dates">b. Feb 19, 1921 — d. Aug 13, 2002</div><div class="place">w/ Winnie | No children</div></div>
+        <div class="person male deceased"><div class="name">Silvester Toliver</div><div class="dates">b. Sep 12, 1937 — d. Dec 28, 2009</div><div class="place">Father: Ned Toliver | 13 children</div></div>
+        <div class="person female"><div class="name">Dorothy Moss Garrison</div><div class="dates">b. Jun 18, 1939</div><div class="place">Father: Jack Moss | 5 children</div></div>
+        <div class="person female deceased"><div class="name">Joann Patterson Jackson</div><div class="dates">b. Sep 8, 1940 — d. Apr 5, 2001</div><div class="place">Father: Robert Patterson | 9 children</div></div>
+        <div class="person female"><div class="name">Irene Miller Smith Sanderson</div><div class="dates">b. Jun 29, 1943</div><div class="place">7 children</div></div>
+        <div class="person female deceased"><div class="name">Lizzie Mae Miller</div><div class="dates">b. Apr 5, 1945 — d. Nov 8, 2013</div><div class="place">5 children</div></div>
+        <div class="person male deceased"><div class="name">Van Miller Jr.</div><div class="dates">b. May 17, 1947 — d. Jul 22, 1999</div><div class="place">3 children</div></div>
+        <div class="person male deceased"><div class="name">Baby Boy (stillborn)</div><div class="dates">1948</div></div>
+        <div class="person female deceased"><div class="name">Beth Miller</div><div class="dates">b./d. Jun 14, 1949 (lived 8 hrs)</div></div>
+        <div class="person male"><div class="name">Rev. Andrew Miller</div><div class="dates">b. Dec 4, 1951 — Memphis, TN</div><div class="place">Wife: Sandra Cobb Miller | 2 sons</div></div>
+        <div class="person male deceased"><div class="name">L.C. Miller</div><div class="dates">b. May 30, 1954 — d. Apr 25, 2019</div><div class="place">Father: Leonard "Tang" Smith</div></div>
+        <div class="person male"><div class="name">Leroy Miller Sr.</div><div class="dates">b. Aug 17, 1955</div><div class="place">Wife: Martha Jean Ferguson (d. 2017)</div></div>
+    </div>
+
+    <div class="gen-label" style="margin-top:25px;">Children of Joe Lee "Boot" Buchanan & Louise Barfield</div>
+    <div class="children">
+        <div class="person male"><div class="name">Joe Lee Buchanan Jr.</div></div>
+        <div class="person female"><div class="name">Ella Buchanan</div><div class="dates">b. 1953</div></div>
+        <div class="person male"><div class="name">John Buchanan (Twin)</div><div class="dates">b. Jul 2, 1955</div></div>
+        <div class="person female"><div class="name">Joyce Buchanan (Twin)</div><div class="dates">b. Jul 2, 1955</div></div>
+    </div>
+</div>
+
+<!-- GEN 4 -->
+<div class="section" id="gen4">
+    <div class="gen-label">Generation 4 — Grandchildren of Van Sr. & Elizabeth</div>
+
+    <div class="gen-label">Flora Louise Miller Cook (w/ Roosevelt Cook Sr.)</div>
+    <div class="children">
+        <div class="person male"><div class="name">Roosevelt Cook Jr.</div></div>
+        <div class="person male"><div class="name">Charles Cook</div><div class="dates">b. Jul 28, 1947</div></div>
+        <div class="person male"><div class="name">Bobby Cook</div><div class="dates">b. Mar 7, 1950</div></div>
+    </div>
+
+    <div class="gen-label">Silvester Toliver (13 children, 4 mothers)</div>
+    <div class="children">
+        <div class="person male"><div class="name">Larry Wilkins Sr.</div><div class="dates">b. Jan 19, 1959</div><div class="place">w/ Mary Liza Humphrey</div></div>
+        <div class="person female deceased"><div class="name">Brenda Toliver</div><div class="dates">b. Jun 26, 1961 — d. Mar 17, 2025</div><div class="place">w/ Dorothy Cole</div></div>
+        <div class="person male"><div class="name">Jerome Toliver</div><div class="dates">b. Dec 9, 1963</div><div class="place">w/ Dorothy Cole</div></div>
+        <div class="person female"><div class="name">Linda Toliver</div><div class="dates">b. Sep 27, 1964</div><div class="place">w/ Dorothy Cole</div></div>
+        <div class="person male"><div class="name">Rickey Sanderson</div><div class="dates">b. Apr 29, 1965</div><div class="place">w/ Effie Sanderson</div></div>
+        <div class="person female"><div class="name">Silver Toliver Cole</div><div class="dates">b. Sep 23, 1965</div><div class="place">w/ Dorothy Cole</div></div>
+        <div class="person female"><div class="name">Robin Allen</div><div class="dates">b. Oct 7, 1965</div><div class="place">w/ Effie Sanderson</div></div>
+        <div class="person male"><div class="name">Anthony Allen</div><div class="dates">b. Sep 7, 1968</div><div class="place">w/ Effie Sanderson</div></div>
+        <div class="person male"><div class="name">Jamie Allen</div><div class="dates">b. Aug 17, 1969</div><div class="place">w/ Effie Sanderson</div></div>
+        <div class="person male"><div class="name">Thomas Stewart</div><div class="dates">b. Jul 19, 1972</div><div class="place">w/ Barbara Stewart</div></div>
+        <div class="person female"><div class="name">Fawn Evans</div><div class="dates">b. Aug 3, 1976</div><div class="place">w/ Alice Evans</div></div>
+        <div class="person male"><div class="name">Thomas Gray</div><div class="place">w/ Gwendolyn Gray</div></div>
+        <div class="person female"><div class="name">Virgia Gretie Allen</div><div class="place">w/ Effie Sanderson</div></div>
+    </div>
+
+    <div class="gen-label">Dorothy Moss Garrison (w/ Tommy J. Garrison)</div>
+    <div class="children">
+        <div class="person female"><div class="name">Carolyn Denise Garrison</div><div class="dates">b. Mar 31, 1959 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Elizabeth Ann Garrison</div><div class="dates">b. May 18, 1960 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Gwendolyn Purcell</div><div class="dates">b. May 4, 1961 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Sandra Dee Wren</div><div class="dates">b. May 3, 1962 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Tommie Glynise Savage</div><div class="dates">b. Nov 6, 1967 — Memphis, TN</div></div>
+    </div>
+
+    <div class="gen-label">Joann Patterson Jackson</div>
+    <div class="children">
+        <div class="person male deceased"><div class="name">Kenneth Hurst</div><div class="dates">b. Jan 16, 1956 — d. Apr 23, 2017</div></div>
+        <div class="person male deceased"><div class="name">Robert Lee Hurst</div><div class="dates">b. Jan 22, 1957 — d. Sep 15, 1992</div></div>
+        <div class="person female"><div class="name">Patricia Thomas</div><div class="dates">b. Aug 20, 1958</div></div>
+        <div class="person male"><div class="name">Randy Hurst</div><div class="dates">b. Mar 19, 1960</div></div>
+        <div class="person male deceased"><div class="name">Ronnie Hurst</div><div class="dates">b./d. 1961 (lived ~5 hrs)</div></div>
+        <div class="person female deceased"><div class="name">Debra Fay Anderson</div><div class="dates">b. Sep 28, 1962 — d. 1963</div></div>
+        <div class="person female"><div class="name">Joyce Anderson</div><div class="dates">b. Jan 22, 1964</div></div>
+        <div class="person female"><div class="name">Shirley Anderson</div><div class="dates">b. Apr 2, 1965</div></div>
+        <div class="person male deceased"><div class="name">Bennie Troy Anderson</div><div class="dates">b. Aug 26, 1967 — d. Feb 9, 2018</div></div>
+    </div>
+
+    <div class="gen-label">Irene Miller Smith Sanderson (w/ Henry Smith Sr.)</div>
+    <div class="children">
+        <div class="person male"><div class="name">Henry Lee Smith Jr.</div><div class="dates">b. Aug 5, 1960 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Adrienne Yvette Walker</div><div class="dates">b. Aug 1, 1961 — Memphis, TN</div></div>
+        <div class="person male deceased"><div class="name">Guy Elliott Smith</div><div class="dates">b. Jul 18, 1962 — d. Mar 20, 2022</div></div>
+        <div class="person male deceased"><div class="name">Van Edward Smith Sr.</div><div class="dates">b. Nov 7, 1963 — d. Oct 8, 2009</div></div>
+        <div class="person female"><div class="name">Tara Yolanda Smith</div><div class="dates">b. Sep 9, 1966 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Stephanie Dedra Smith Thomas</div><div class="dates">b. Jul 17, 1968 — Chicago, IL</div></div>
+        <div class="person female"><div class="name">Stephie Deandra Osabuohien</div><div class="dates">b. Jul 17, 1968 — Chicago, IL</div></div>
+    </div>
+
+    <div class="gen-label">Lizzie Mae Miller (w/ Joe L. Vaughn & others)</div>
+    <div class="children">
+        <div class="person male deceased"><div class="name">Joseph Miller</div><div class="dates">b. Jun 21, 1962 — d. Sep 24, 2023</div></div>
+        <div class="person female deceased"><div class="name">Cynthia Miller</div><div class="dates">b. Oct 19, 1963 — d. Dec 5, 2024</div></div>
+        <div class="person male deceased"><div class="name">Derrick Miller</div><div class="dates">b. Mar 20, 1965 — d. Sep 1, 2021</div></div>
+        <div class="person female"><div class="name">Joyce M. Buford</div><div class="dates">b. Dec 3, 1966</div></div>
+        <div class="person female"><div class="name">Loleatha Miller</div><div class="dates">b. Jul 1, 1974</div></div>
+    </div>
+
+    <div class="gen-label">Van Miller Jr. (w/ Delorise Miller)</div>
+    <div class="children">
+        <div class="person male"><div class="name">Twuan Miller</div><div class="dates">b. Oct 8, 1968 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Gretta Miller</div><div class="dates">b. Oct 11, 1971 — Memphis, TN</div></div>
+        <div class="person male"><div class="name">Tristan Miller</div><div class="dates">b. Nov 6, 1977 — Memphis, TN</div></div>
+    </div>
+
+    <div class="gen-label">Leroy Miller Sr. (w/ Martha Jean Ferguson)</div>
+    <div class="children">
+        <div class="person female deceased"><div class="name">Toria Miller Shaw</div><div class="dates">b. Nov 29, 1976 — d. Oct 5, 2024</div></div>
+        <div class="person male"><div class="name">Leroy Miller Jr.</div><div class="dates">b. Nov 11, 1979 — Memphis, TN</div></div>
+        <div class="person female"><div class="name">Annastasia Sade Miller</div><div class="dates">b. Mar 5, 1989 — Memphis, TN</div></div>
+    </div>
+</div>
+
+<!-- GEN 5 -->
+<div class="section" id="gen5">
+    <div class="gen-label">Generation 5 — Current Generation</div>
+
+    <div class="gen-label">Rev. Andrew Miller (w/ Sandra Cobb Miller)</div>
+    <div class="children">
+        <div class="person male"><div class="name">Terrance T. Miller</div><div class="dates">b. Jan 1, 1979 — Memphis, TN</div></div>
+        <div class="person male"><div class="name">Adrian D. Miller</div><div class="dates">b. Mar 8, 1990 — Memphis, TN</div></div>
+    </div>
+    <p style="color:#555; font-size:0.8em; margin:10px 0 20px 30px;">+ the next generation continues...</p>
+</div>
+
+<!-- REUNIONS -->
+<div class="section" id="reunions">
+    <div class="gen-label">Family Reunion History (1991–2030)</div>
+    <div class="stats" style="margin-bottom:20px;">
+        <div class="stat"><div class="number">9</div><div class="label">Hernando</div></div>
+        <div class="stat"><div class="number">3</div><div class="label">Chicago</div></div>
+        <div class="stat"><div class="number">2</div><div class="label">Kansas City</div></div>
+        <div class="stat"><div class="number">1 ea</div><div class="label">Memphis, Nashville, NOLA, Atlanta</div></div>
+    </div>
+    <div class="reunion-list">
+        <div class="reunion-item"><span class="year">1991</span><span class="location">Hernando — National Guard</span></div>
+        <div class="reunion-item"><span class="year">1992</span><span class="location">Hernando — 4-H Building</span></div>
+        <div class="reunion-item"><span class="year">1994</span><span class="location">Hernando, MS</span></div>
+        <div class="reunion-item"><span class="year">1995</span><span class="location">Chicago, IL</span></div>
+        <div class="reunion-item"><span class="year">1997</span><span class="location">Kansas City</span></div>
+        <div class="reunion-item"><span class="year">1999</span><span class="location">Memphis (Rode horses!)</span></div>
+        <div class="reunion-item"><span class="year">2001</span><span class="location">Hernando, MS</span></div>
+        <div class="reunion-item"><span class="year">2003</span><span class="location">Nashville, TN</span></div>
+        <div class="reunion-item"><span class="year">2005</span><span class="location">Hernando — Rising Sun</span></div>
+        <div class="reunion-item"><span class="year">2007</span><span class="location">New Orleans, LA</span></div>
+        <div class="reunion-item"><span class="year">2009</span><span class="location">Hernando — Gale Center</span></div>
+        <div class="reunion-item"><span class="year">2011</span><span class="location">Chicago, IL</span></div>
+        <div class="reunion-item"><span class="year">2013</span><span class="location">Hernando — Gale Center</span></div>
+        <div class="reunion-item"><span class="year">2015</span><span class="location">Atlanta, GA</span></div>
+        <div class="reunion-item"><span class="year">2017</span><span class="location">Hernando — Civil Rights Museum</span></div>
+        <div class="reunion-item"><span class="year">2019</span><span class="location">Kansas City — East Side MB</span></div>
+        <div class="reunion-item"><span class="year">2022</span><span class="location">Hernando — Gale Center</span></div>
+        <div class="reunion-item"><span class="year">2024</span><span class="location">Chicago — Coyote Run Golf</span></div>
+        <div class="reunion-item"><span class="year">2028</span><span class="location">Katy / Houston, TX</span></div>
+        <div class="reunion-item"><span class="year">2030</span><span class="location">Hernando, MS</span></div>
+    </div>
+</div>
+
+<!-- POSTER VIEW -->
+<div class="section" id="poster">
+    <div class="poster-view">
+        <h2>BUCHANAN — MILLER FAMILY TREE</h2>
+        <div class="psub">Five Generations | Mississippi → Across America</div>
+
+        <div class="pgen">Generation 1 — The Roots (1850s–1870s)</div>
+        <div class="pcouple">George Washington Jones (b.1853) ⚭ Harriet Bedford / Louise Dockery</div>
+        <div class="pchildren">
+            <div class="pc"><div class="pn">John Wesley Jones</div></div>
+            <div class="pc"><div class="pn">Darkies Jones</div><div class="pd">b.1878 — d.1972</div></div>
+            <div class="pc"><div class="pn">Coleman Jones</div><div class="pd">b.1881</div></div>
+            <div class="pc"><div class="pn">Fannie Jones</div><div class="pd">b.1883</div></div>
+            <div class="pc"><div class="pn">Richard Jones</div><div class="pd">b.1884</div></div>
+            <div class="pc"><div class="pn">George Bob Jones</div><div class="pd">b.1887</div></div>
+            <div class="pc"><div class="pn">Tom Petty Jones</div><div class="pd">b.1889</div></div>
+            <div class="pc"><div class="pn">Joe Lee Jones</div><div class="pd">b.1890</div></div>
+            <div class="pc"><div class="pn">Elijah Jones</div></div>
+            <div class="pc"><div class="pn">Rosie Lee Jones</div><div class="pd">b.1873 — d.1972</div></div>
+            <div class="pc"><div class="pn">Nathaniel Jones</div><div class="pd">b.1902 (w/ Louise)</div></div>
+            <div class="pc"><div class="pn">James Jones</div><div class="pd">b.1903 (w/ Louise)</div></div>
+            <div class="pc"><div class="pn">Liddie Anne Jones</div><div class="pd">(w/ Louise)</div></div>
+        </div>
+
+        <div class="pcouple">Stran Miller (b.1864) ⚭ Lizzie Evans / Martha Howard</div>
+        <div class="pchildren">
+            <div class="pc"><div class="pn">Zellie Miller</div><div class="pd">b.1891 — d.1981</div></div>
+            <div class="pc"><div class="pn">Van Miller Sr.</div><div class="pd">b.1896 — d.1980</div></div>
+            <div class="pc"><div class="pn">Mae Lee Miller</div><div class="pd">b.1898 — d.~1970</div></div>
+            <div class="pc"><div class="pn">Henry C. Evans</div><div class="pd">b.1900 — d.1989</div></div>
+            <div class="pc"><div class="pn">Tuck Zan Miller</div><div class="pd">b.1901 — d.1990</div></div>
+            <div class="pc"><div class="pn">Luella Miller</div><div class="pd">b.1905 — d.1992</div></div>
+            <div class="pc"><div class="pn">Andrew Miller</div><div class="pd">b.1910 — d.1992</div></div>
+        </div>
+
+        <div class="pgen">Generation 2 — Virgil Buchanan ⚭ Rosie Lee Jones (Jan 12, 1899) — 18 Children</div>
+        <div class="pchildren">
+            <div class="pc"><div class="pn">Vinnie Robinson</div><div class="pd">b.1897 — d.1988</div></div>
+            <div class="pc"><div class="pn">Rev. Willie "Bud"</div><div class="pd">b.1898 — d.1982</div></div>
+            <div class="pc"><div class="pn">Annie Buchanan</div><div class="pd">b.1901</div></div>
+            <div class="pc"><div class="pn">B.D. Buchanan</div><div class="pd">b.1902</div></div>
+            <div class="pc"><div class="pn">Henry "Dank"</div><div class="pd">b.1903 — d.1992</div></div>
+            <div class="pc"><div class="pn">Mary Lee</div><div class="pd">b.1906</div></div>
+            <div class="pc"><div class="pn">Irean "Lump"</div><div class="pd">b.1907 — d.1987</div></div>
+            <div class="pc"><div class="pn">Mary Alice "Ladd"</div><div class="pd">b.1909 — d.1987</div></div>
+            <div class="pc"><div class="pn">Charlotte "Lottie"</div><div class="pd">b.1910 — d.1986</div></div>
+            <div class="pc"><div class="pn">Mary (Twin)</div><div class="pd">b.1912</div></div>
+            <div class="pc"><div class="pn">Martha (Twin)</div><div class="pd">b.1912</div></div>
+            <div class="pc"><div class="pn">Sylvester "Bull"</div><div class="pd">b.1916 — d.1980</div></div>
+            <div class="pc"><div class="pn">Angus "Pap"</div><div class="pd">b.1918 — d.1988</div></div>
+            <div class="pc"><div class="pn">Joe Lee "Boot"</div><div class="pd">b.1919 — d.1969</div></div>
+            <div class="pc"><div class="pn">Elizabeth "Sug"</div><div class="pd">b.1920 — d.1993</div></div>
+            <div class="pc"><div class="pn">Perry</div><div class="pd">b.1921</div></div>
+            <div class="pc"><div class="pn">Rosie Lee "Toot"</div><div class="pd">b.1921 — d.2015</div></div>
+            <div class="pc"><div class="pn">Leane M.</div><div class="pd">b.1922</div></div>
+        </div>
+
+        <div class="pgen">Generation 3 — Van Miller Sr. ⚭ Elizabeth Buchanan — 13 Children</div>
+        <div class="pchildren">
+            <div class="pc"><div class="pn">Flora Louise Cook</div><div class="pd">b.1917 — d.1983</div></div>
+            <div class="pc"><div class="pn">Mozell McCoy</div><div class="pd">b.1921 — d.2002</div></div>
+            <div class="pc"><div class="pn">Silvester Toliver</div><div class="pd">b.1937 — d.2009</div></div>
+            <div class="pc"><div class="pn">Dorothy Garrison</div><div class="pd">b.1939</div></div>
+            <div class="pc"><div class="pn">Joann Jackson</div><div class="pd">b.1940 — d.2001</div></div>
+            <div class="pc"><div class="pn">Irene Sanderson</div><div class="pd">b.1943</div></div>
+            <div class="pc"><div class="pn">Lizzie Mae Miller</div><div class="pd">b.1945 — d.2013</div></div>
+            <div class="pc"><div class="pn">Van Miller Jr.</div><div class="pd">b.1947 — d.1999</div></div>
+            <div class="pc"><div class="pn">Rev. Andrew Miller</div><div class="pd">b.1951</div></div>
+            <div class="pc"><div class="pn">L.C. Miller</div><div class="pd">b.1954 — d.2019</div></div>
+            <div class="pc"><div class="pn">Leroy Miller Sr.</div><div class="pd">b.1955</div></div>
+        </div>
+
+        <div class="pgen">Generation 4 — Grandchildren (50+ documented)</div>
+        <div class="pfam"><div class="pfam-title">Silvester Toliver — 13 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Larry Wilkins Sr.</div><div class="pd">b.1959</div></div>
+                <div class="pc"><div class="pn">Brenda Toliver</div><div class="pd">b.1961 — d.2025</div></div>
+                <div class="pc"><div class="pn">Jerome Toliver</div><div class="pd">b.1963</div></div>
+                <div class="pc"><div class="pn">Linda Toliver</div><div class="pd">b.1964</div></div>
+                <div class="pc"><div class="pn">Rickey Sanderson</div><div class="pd">b.1965</div></div>
+                <div class="pc"><div class="pn">Silver Toliver Cole</div><div class="pd">b.1965</div></div>
+                <div class="pc"><div class="pn">Robin Allen</div><div class="pd">b.1965</div></div>
+                <div class="pc"><div class="pn">Anthony Allen</div><div class="pd">b.1968</div></div>
+                <div class="pc"><div class="pn">Jamie Allen</div><div class="pd">b.1969</div></div>
+                <div class="pc"><div class="pn">Thomas Stewart</div><div class="pd">b.1972</div></div>
+                <div class="pc"><div class="pn">Fawn Evans</div><div class="pd">b.1976</div></div>
+                <div class="pc"><div class="pn">Thomas Gray</div></div>
+                <div class="pc"><div class="pn">Virgia Gretie Allen</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Dorothy Garrison — 5 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Carolyn Garrison</div><div class="pd">b.1959</div></div>
+                <div class="pc"><div class="pn">Elizabeth Garrison</div><div class="pd">b.1960</div></div>
+                <div class="pc"><div class="pn">Gwendolyn Purcell</div><div class="pd">b.1961</div></div>
+                <div class="pc"><div class="pn">Sandra Dee Wren</div><div class="pd">b.1962</div></div>
+                <div class="pc"><div class="pn">Tommie Savage</div><div class="pd">b.1967</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Joann Jackson — 9 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Kenneth Hurst</div><div class="pd">b.1956 — d.2017</div></div>
+                <div class="pc"><div class="pn">Robert Lee Hurst</div><div class="pd">b.1957 — d.1992</div></div>
+                <div class="pc"><div class="pn">Patricia Thomas</div><div class="pd">b.1958</div></div>
+                <div class="pc"><div class="pn">Randy Hurst</div><div class="pd">b.1960</div></div>
+                <div class="pc"><div class="pn">Joyce Anderson</div><div class="pd">b.1964</div></div>
+                <div class="pc"><div class="pn">Shirley Anderson</div><div class="pd">b.1965</div></div>
+                <div class="pc"><div class="pn">Bennie Troy Anderson</div><div class="pd">b.1967 — d.2018</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Irene Sanderson — 7 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Henry Lee Smith Jr.</div><div class="pd">b.1960</div></div>
+                <div class="pc"><div class="pn">Adrienne Walker</div><div class="pd">b.1961</div></div>
+                <div class="pc"><div class="pn">Guy Elliott Smith</div><div class="pd">b.1962 — d.2022</div></div>
+                <div class="pc"><div class="pn">Van Edward Smith Sr.</div><div class="pd">b.1963 — d.2009</div></div>
+                <div class="pc"><div class="pn">Tara Yolanda Smith</div><div class="pd">b.1966</div></div>
+                <div class="pc"><div class="pn">Stephanie Smith Thomas</div><div class="pd">b.1968</div></div>
+                <div class="pc"><div class="pn">Stephie Osabuohien</div><div class="pd">b.1968</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Lizzie Mae Miller — 5 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Joseph Miller</div><div class="pd">b.1962 — d.2023</div></div>
+                <div class="pc"><div class="pn">Cynthia Miller</div><div class="pd">b.1963 — d.2024</div></div>
+                <div class="pc"><div class="pn">Derrick Miller</div><div class="pd">b.1965 — d.2021</div></div>
+                <div class="pc"><div class="pn">Joyce M. Buford</div><div class="pd">b.1966</div></div>
+                <div class="pc"><div class="pn">Loleatha Miller</div><div class="pd">b.1974</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Van Miller Jr. — 3 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Twuan Miller</div><div class="pd">b.1968</div></div>
+                <div class="pc"><div class="pn">Gretta Miller</div><div class="pd">b.1971</div></div>
+                <div class="pc"><div class="pn">Tristan Miller</div><div class="pd">b.1977</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Rev. Andrew Miller — 2 sons</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Terrance T. Miller</div><div class="pd">b.1979</div></div>
+                <div class="pc"><div class="pn">Adrian D. Miller</div><div class="pd">b.1990</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Leroy Miller Sr. — 3 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Toria Miller Shaw</div><div class="pd">b.1976 — d.2024</div></div>
+                <div class="pc"><div class="pn">Leroy Miller Jr.</div><div class="pd">b.1979</div></div>
+                <div class="pc"><div class="pn">Annastasia Sade Miller</div><div class="pd">b.1989</div></div>
+            </div>
+        </div>
+        <div class="pfam"><div class="pfam-title">Flora Louise Cook — 3 children</div>
+            <div class="pchildren">
+                <div class="pc"><div class="pn">Roosevelt Cook Jr.</div></div>
+                <div class="pc"><div class="pn">Charles Cook</div><div class="pd">b.1947</div></div>
+                <div class="pc"><div class="pn">Bobby Cook</div><div class="pd">b.1950</div></div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:25px; padding-top:15px; border-top:2px solid #ddd;">
+            <p style="color:#888; font-size:0.8em;">Data compiled by Rev. Andrew Miller | 120+ documented members | Updated Dec 2025</p>
+            <p style="color:#888; font-size:0.8em; margin-top:3px;">Next Reunion: July 21-23, 2028 — Katy, TX | 2030 — Hernando, MS</p>
+            <button onclick="window.print()" style="margin-top:12px; padding:10px 25px; background:#8B0000; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.9em;">🖨️ Print This Poster</button>
+        </div>
+    </div>
+</div>
+
+</div><!-- end container -->
+
+<script>
+function show(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+}
+function doSearch() {
+    const q = document.getElementById('search').value.toLowerCase();
+    if (q.length < 2) {
+        document.querySelectorAll('.person, .pc').forEach(p => { p.style.outline = ''; p.style.opacity = ''; });
+        return;
+    }
+    document.querySelectorAll('.person').forEach(p => {
+        const text = p.textContent.toLowerCase();
+        if (text.includes(q)) { p.style.outline = '2px solid #e94560'; p.style.opacity = '1'; }
+        else { p.style.outline = ''; p.style.opacity = '0.4'; }
+    });
+    document.querySelectorAll('.pc').forEach(p => {
+        const text = p.textContent.toLowerCase();
+        if (text.includes(q)) { p.style.outline = '2px solid #8B0000'; p.style.opacity = '1'; }
+        else { p.style.outline = ''; p.style.opacity = '0.4'; }
+    });
+}
+</script>
+</body>
+</html>
